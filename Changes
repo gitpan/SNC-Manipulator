@@ -2,3 +2,9 @@ Revision history for Perl extension SNC::Manipulator.
 
 0.10  Tue Jun 21 15:13:00 2005
 	- original beta version; basic functionality only
+
+0.20  xxx Jun xx xx:xx:00 2005
+	- filled in snapshot function stub
+        - added pattern matching to moveRelative()
+        - results from a sucessful inquiry() now longer are quoted.
+        - some typos fixed in documentation

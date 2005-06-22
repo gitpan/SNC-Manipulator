@@ -1,4 +1,4 @@
-SNC/Manipulator version 0.10
+SNC/Manipulator version 0.20
 =======================
 
 NAME
@@ -9,10 +9,10 @@ SYNOPSIS
 
       use SNC::Manipulator;  
 
-      $SNCcamera = new SNC::Manipulator( "http://192.168.99.4" );
+      $SNCcamera = new SNC::Manipulator( "192.168.99.4" );
 
       #Or to use a custom port (2024) call this
-      $SNCcamera = new SNC::Manipulator( "http://192.168.99.4", "2024" );
+      $SNCcamera = new SNC::Manipulator( "192.168.99.4", "2024" );
 
       $SNCcamera->setLogin( 'admin', 'pass' );  #lvl 4
 

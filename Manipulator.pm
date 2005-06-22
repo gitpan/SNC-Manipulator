@@ -12,7 +12,7 @@ package SNC::Manipulator;
 BEGIN {
   use HTTP::Request::Common;
   use LWP::UserAgent;
-  $VERSION = '0.10a';
+  $VERSION = '0.20';
 }
 
 #---------- Constructor ----------#
@@ -76,8 +76,7 @@ sub inquiry()
     {
       my ($key, $encap_val) = split(/=/, $fields[1]);
 
-      $val = $encap_val; #change, if needed
-#      my ($val) = split(/\"/, $encap_val); 
+      $val = substr( $encap_val, 1, length($encap_val)-2 ); #get rid of the extra quotes
 
       $ret{$key} = $val;
       $instance{$inqjs}{$key} = $val;
@@ -166,14 +165,14 @@ sub moveRelative {
 
   #for all those wondering, the $AABB variable refrences the tech documents
 
-  if ( $moveDirection eq 'SOUTHWEST' || $moveDirection eq 'SW' ) { $AABB = '01'; }
-  elsif ( $moveDirection eq 'SOUTH' || $moveDirection eq 'S' ) { $AABB = '02'; }
-  elsif ( $moveDirection eq 'SOUTHEAST' || $moveDirection eq 'SE' ) { $AABB = '03'; }
-  elsif ( $moveDirection eq 'WEST' || $moveDirection eq 'W' ) { $AABB = '04'; }
-  elsif ( $moveDirection eq 'EAST' || $moveDirection eq 'E' ) { $AABB = '06'; }
-  elsif ( $moveDirection eq 'NORTHWEST' || $moveDirection eq 'NW' ) { $AABB = '07'; }
-  elsif ( $moveDirection eq 'NORTH' || $moveDirection eq 'N' ) { $AABB = '08'; }
-  elsif ( $moveDirection eq 'NORTHEAST' || $moveDirection eq 'NE' ) { $AABB = '09'; }
+  if ( $moveDirection =~ /^S.?.?.?.?W.?.?.?$/i ) { $AABB = '01'; }
+  elsif ( $moveDirection =~ /^S.?.?.?.?$/i ) { $AABB = '02'; }
+  elsif ( $moveDirection =~ /^S.?.?.?.?E.?.?.?$/i ) { $AABB = '03'; }
+  elsif ( $moveDirection =~ /^W.?.?.?$/i ) { $AABB = '04'; }
+  elsif ( $moveDirection =~ /^E.?.?.?$/i ) { $AABB = '06'; }
+  elsif ( $moveDirection =~ /^N.?.?.?.?W.?.?.?$/i ) { $AABB = '07'; }
+  elsif ( $moveDirection =~ /^N.?.?.?.?$/i ) { $AABB = '08'; }
+  elsif ( $moveDirection =~ /^N.?.?.?.?E.?.?.?$/i ) { $AABB = '09'; }
   else
   {
     print STDERR "$moveDirection is not a valid compass direction.\n";
@@ -238,7 +237,14 @@ sub captureToFile()
   my ($instance, $file) = @_;
   die "expecting a __PACKAGE__\n" unless $instance->isa(__PACKAGE__);
 
-  #$instance{url} . '/oneshotimage.jpg'; #into file $file
+  my $resp = $instance{UserAgent}->get( $instance{url} . '/oneshotimage.jpg' );
+
+  open( BINOUT, ">$file" );
+  binmode(BINOUT);
+
+  print BINOUT $resp->content;
+
+  close (BINOUT);
 }
 
 
@@ -319,10 +325,10 @@ __END__
 
       use SNC::Manipulator;  
 
-      $SNCcamera = new SNC::Manipulator( "http://192.168.99.4" );
+      $SNCcamera = new SNC::Manipulator( "192.168.99.4" );
 
       #Or to use a custom port (2024) call this
-      $SNCcamera = new SNC::Manipulator( "http://192.168.99.4", "2024" );
+      $SNCcamera = new SNC::Manipulator( "192.168.99.4", "2024" );
 
       $SNCcamera->setLogin( 'admin', 'pass' );  #lvl 4
 
