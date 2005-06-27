@@ -12,7 +12,7 @@ package SNC::Manipulator;
 BEGIN {
   use HTTP::Request::Common;
   use LWP::UserAgent;
-  $VERSION = '0.20';
+  $VERSION = '0.30';
 }
 
 #---------- Constructor ----------#
@@ -232,6 +232,16 @@ sub rawVISCA
 ###########################
 #--- capture functions ---#
 
+sub capture()
+{
+  my ($instance) = @_;
+  die "expecting a __PACKAGE__\n" unless $instance->isa(__PACKAGE__);
+
+  my $resp = $instance{UserAgent}->get( $instance{url} . '/oneshotimage.jpg' );
+
+  return $resp->content;
+}
+
 sub captureToFile()
 {
   my ($instance, $file) = @_;
@@ -244,6 +254,90 @@ sub captureToFile()
 
   print BINOUT $resp->content;
 
+  close (BINOUT);
+}
+
+sub captureStream()
+{
+  my ($instance, $number, $paramtype, $param) = @_;
+  die "expecting a __PACKAGE__\n" unless $instance->isa(__PACKAGE__);
+
+  if ( $number >= 1 && $number <= 1000000 )
+  {
+    $args = "?number=$number";
+  }
+  else
+  {
+    print STDERR "Invalid argument ($number) for 'number' parameter\n";
+    print STDERR "Number of frames must be between 1 and 1000000.\n";
+  return undef;
+  }
+
+  if ( $paramtype )
+  {
+    if ( $paramtype eq 'speed' )
+    {
+      #speed parameters,
+      # 0 - fastest
+      # 1 - 1 frame/sec
+      # 2 - 2
+      # 3 - 3
+      # 4 - 4
+      # 5 - 5
+      # 6 - 6
+      # 8 - 8
+      # 10 - 10 NTSC model
+      # 10 - 12 PAL model
+      # 20 - 15 NTSC model
+      # 20 - 16 PAL model
+      # 20 - 20
+      # 30 - 25 NTSC modelk
+
+      if (
+           $param eq '0' || $param eq '1' ||
+           $param eq '2' || $param eq '3' ||
+           $param eq '4' || $param eq '5' ||
+           $param eq '6' || $param eq '8' ||
+           $param eq '10' || $param eq '20' ||
+           $param eq '30'
+         )
+      {
+        $args .= '&speed=' . $param;
+      }
+      else
+      {
+        print STDERR "Invalid argument ($param) for 'speed' parameter\n";
+        print STDERR "try 0,1,2,3,4,5,6,8,10,20, or 30\n";
+      }
+    }
+    elsif ( $paramtype eq 'interval' ) # 2.0 or higher software only
+    {
+      #check version here 
+      if ( $param >= 40 && $param <= 3600000 )
+      {
+        $args .= '&interval=' . $param;
+      }
+      else
+      {
+        print STDERR "Invalid argument ($param) for 'interval' parameter\n";
+        print STDERR "Integers from 40 to 3,600,000 are valid.\n";
+      }
+    }
+  }
+
+  my $resp = $instance{UserAgent}->get( $instance{url} . '/image' . $args );
+
+  return $resp->content;
+}
+
+sub captureStreamToFile()
+{
+  my ($instance, $file, $number, $paramtype, $param) = @_;
+  die "expecting a __PACKAGE__\n" unless $instance->isa(__PACKAGE__);
+
+  open( BINOUT, ">$file" );
+  binmode(BINOUT);
+  print BINOUT captureStream( $number, $paramtype, $param );
   close (BINOUT);
 }
 
@@ -463,7 +557,10 @@ To install this module type the following:
 
 =head1 BUGS
 
-  Its beta with minimal functionality, here there be demons.
+  There is a bug with the MJPEG streams,
+  as provided by the camera it is not compatible with MJPEG viewers;
+  and therefore needs to be reformatted.
+  A fix is in the works.
 
 =head1 AUTHORS
 
@@ -471,6 +568,4 @@ Charles Morris <cmorris@cs.odu.edu>
 
 special thanks to Ian Gullett <igullett@cs.odu.edu>,
 for motivation to finish this,
-and for certain insights into the `Abyss of Sony`.
-
-
+and for certain insights into the `Abyss of Sony`
